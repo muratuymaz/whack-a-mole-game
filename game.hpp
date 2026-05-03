@@ -28,9 +28,10 @@ public:
     Vec2 molePos{0.f, 0.f};
     Vec2 moleVel{180.f, 90.f};
 
+    SDL_Rect holes[9];
+
     bool isRunning = false;
     int windowWidth = 800;
     int windowHeight = 600;
-    bool isFullscreen = false;
     bool isVisible = true;
 };

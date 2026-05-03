@@ -40,6 +40,25 @@ bool game::init(string name, int windowWidth, int windowHeight){
     
     SDL_QueryTexture(moleTex, nullptr, nullptr, &moleDst.w, &moleDst.h);
     
+    int rows = 3;
+    int cols = 3;
+    int holeSize = 100; 
+    
+    int spacingX = (windowWidth - (cols * holeSize)) / (cols + 1);
+    int spacingY = (windowHeight - (rows * holeSize)) / (rows + 1);
+
+    int index = 0;
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            holes[index].w = holeSize;
+            holes[index].h = holeSize;
+
+            holes[index].x = spacingX + j * (holeSize + spacingX);
+            holes[index].y = spacingY + i * (holeSize + spacingY);
+            index++;
+        }
+    }
+
     isRunning = true;
     return true;
 }
@@ -109,16 +128,27 @@ void game::update(float dt){
 
 void game::render(){
     
-    
     SDL_SetRenderDrawColor(renderer, 125, 30, 200, 255);
     SDL_RenderClear(renderer);
 
+    SDL_SetRenderDrawColor(renderer, 50, 25, 10, 255); 
+    for (int i = 0; i < 9; ++i) {
+        SDL_RenderFillRect(renderer, &holes[i]); 
+    }
+
     if (isVisible)
     {
-        moleDst.x = static_cast<int> (molePos.x);
-        moleDst.y = static_cast<int> (molePos.y);
-        
-        SDL_RenderCopy(renderer, moleTex, nullptr, &moleDst);
+        for (int i = 0; i < 9; ++i) {
+            SDL_Rect currentMoleDst;
+            
+            currentMoleDst.w = static_cast<int>(holes[i].w * 0.8); 
+            currentMoleDst.h = static_cast<int>(holes[i].h * 0.8); 
+                        
+            currentMoleDst.x = holes[i].x + (holes[i].w - currentMoleDst.w) / 2;
+            currentMoleDst.y = holes[i].y + (holes[i].h - currentMoleDst.h) / 2;
+
+            SDL_RenderCopy(renderer, moleTex, nullptr, &currentMoleDst);
+        }
     }
     // SDL_Rect molePng {100, 200, 128, 128};
     // SDL_RenderCopy(renderer, testTexture, nullptr, &molePng);
