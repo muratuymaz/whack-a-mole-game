@@ -2,6 +2,7 @@ tempCodeRunnerFile.cpp
 .vscode
 *.dll
 *.exe
+*.ttf
 Gereksinimler.txt
-mole.png
+*.png
 whack-a-mole-game.code-workspace
