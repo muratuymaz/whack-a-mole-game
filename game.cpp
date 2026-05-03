@@ -2,6 +2,9 @@
 #include <iostream>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+
+constexpr int TARGET_FPS = 60;
+constexpr int FRAME_DELAY = 1000/ TARGET_FPS;
 using namespace std;
 
 game::game(){};
@@ -41,11 +44,19 @@ bool game::init(string name, int windowWidth, int windowHeight){
     return true;
 }
 void game::run(){
+    Uint64 now = SDL_GetPerformanceCounter();
+    Uint64 freq = SDL_GetPerformanceFrequency();
+
     while (isRunning)
     {
+        Uint64 nNow = SDL_GetPerformanceCounter();
+        float dt = static_cast<float> (nNow- now)/ freq;
+        now = nNow;
+
         processInput();
-        update(0.0f);
+        update(dt);
         render();
+        
     }
 }
 void game::processInput(){
@@ -85,21 +96,20 @@ void game::processInput(){
     }
 }
 
-void game::update(float deltaTime){
-    molePos.x += moleVel.x;
-    molePos.y += moleVel.y;
+void game::update(float dt){
+    molePos.x += moleVel.x*dt;
+    molePos.y += moleVel.y*dt;
     if (molePos.x < 0 || molePos.x + moleDst.w > windowWidth) moleVel.x *= -1;
     if (molePos.y < 0 || molePos.y + moleDst.h > windowHeight) moleVel.y *= -1;
     
 }
 
 void game::render(){
-    SDL_Rect box {100,100,200,100};
     
     SDL_SetRenderDrawColor(renderer, 125, 30, 200, 255);
     SDL_RenderClear(renderer);
 
-    moleDst.x = static_cast<int> (molePos.x);
+    // moleDst.x = static_cast<int> (molePos.x);
     moleDst.y = static_cast<int> (molePos.y);
 
     SDL_RenderCopy(renderer, moleTex, nullptr, &moleDst);

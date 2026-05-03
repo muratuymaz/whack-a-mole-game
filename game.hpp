@@ -25,8 +25,8 @@ private:
     struct Vec2 {float x{0.f}, y{0.f};};
     SDL_Texture* moleTex = nullptr;
     SDL_Rect moleDst {0, 0, 0, 0};
-    Vec2 molePos{100.f, 100.f};
-    Vec2 moleVel{2.f, 1.f};
+    Vec2 molePos{0.f, 0.f};
+    Vec2 moleVel{180.f, 90.f};
 
     bool isRunning = false;
     int windowWidth = 800;
