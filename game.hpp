@@ -24,7 +24,7 @@ private:
     
     struct Vec2 {float x{0.f}, y{0.f};};
     SDL_Texture* moleTex = nullptr;
-    SDL_Rect moleDst {0, 0, 0, 0};
+    SDL_Rect moleDst {0, 0, 0 ,0}; // x, y, w, h
     Vec2 molePos{0.f, 0.f};
     Vec2 moleVel{180.f, 90.f};
 

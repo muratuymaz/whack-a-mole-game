@@ -50,7 +50,7 @@ void game::run(){
     while (isRunning)
     {
         Uint64 nNow = SDL_GetPerformanceCounter();
-        float dt = static_cast<float> (nNow- now)/ freq;
+        float dt = static_cast<float> (nNow - now) / freq;
         now = nNow;
 
         processInput();
@@ -71,7 +71,6 @@ void game::processInput(){
             isRunning = false;
             break;
         case SDL_KEYDOWN:
-            cout << "Tusa basildi: " << SDL_GetKeyName(event.key.keysym.sym) << endl;
             if (event.key.keysym.sym == SDLK_BACKSPACE)
             {
                 cout << "Oyun kapatiliyor..." << endl;
@@ -83,11 +82,14 @@ void game::processInput(){
         //     break;
         case SDL_MOUSEBUTTONDOWN:
             if (event.button.button == SDL_BUTTON_LEFT)
-            { 
-                cout << "Mouse sol tusuna basildi: (" << event.button.x << ", " << event.button.y << ")" << endl;
-            }else if (event.button.button == SDL_BUTTON_RIGHT)
             {
-                cout << "Mouse sag tusuna basildi: (" << event.button.x << ", " << event.button.y << ")" << endl;
+                int mouseX = event.button.x;
+                int mouseY = event.button.y;
+                SDL_Point mousePoint = { mouseX, mouseY };
+                if (SDL_PointInRect(&mousePoint, &moleDst)) 
+                {
+                    cout<< "vurdun" << endl;
+                }
             }
             break;
         default:
@@ -109,7 +111,7 @@ void game::render(){
     SDL_SetRenderDrawColor(renderer, 125, 30, 200, 255);
     SDL_RenderClear(renderer);
 
-    // moleDst.x = static_cast<int> (molePos.x);
+    moleDst.x = static_cast<int> (molePos.x);
     moleDst.y = static_cast<int> (molePos.y);
 
     SDL_RenderCopy(renderer, moleTex, nullptr, &moleDst);
