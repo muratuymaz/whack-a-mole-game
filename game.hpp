@@ -12,11 +12,11 @@ public:
     bool init(string name, int windowWidth, int windowHeight);
     void shutdown();
     void run();
-private:
+    private:
     void processInput();
     void update(float deltaTime);
     void render();
-private:
+    private:
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* LoadTexture(const string& path);
@@ -32,4 +32,5 @@ private:
     int windowWidth = 800;
     int windowHeight = 600;
     bool isFullscreen = false;
+    bool isVisible = true;
 };

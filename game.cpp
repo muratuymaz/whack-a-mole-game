@@ -86,9 +86,10 @@ void game::processInput(){
                 int mouseX = event.button.x;
                 int mouseY = event.button.y;
                 SDL_Point mousePoint = { mouseX, mouseY };
-                if (SDL_PointInRect(&mousePoint, &moleDst)) 
+                if (SDL_PointInRect(&mousePoint, &moleDst) && isVisible) 
                 {
                     cout<< "vurdun" << endl;
+                    isVisible = false;
                 }
             }
             break;
@@ -108,13 +109,17 @@ void game::update(float dt){
 
 void game::render(){
     
+    
     SDL_SetRenderDrawColor(renderer, 125, 30, 200, 255);
     SDL_RenderClear(renderer);
 
-    moleDst.x = static_cast<int> (molePos.x);
-    moleDst.y = static_cast<int> (molePos.y);
-
-    SDL_RenderCopy(renderer, moleTex, nullptr, &moleDst);
+    if (isVisible)
+    {
+        moleDst.x = static_cast<int> (molePos.x);
+        moleDst.y = static_cast<int> (molePos.y);
+        
+        SDL_RenderCopy(renderer, moleTex, nullptr, &moleDst);
+    }
     // SDL_Rect molePng {100, 200, 128, 128};
     // SDL_RenderCopy(renderer, testTexture, nullptr, &molePng);
 
@@ -144,5 +149,6 @@ SDL_Texture* game::LoadTexture(const string& path){
     }
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer,surface);
     SDL_FreeSurface(surface);
+
     return texture;
 }
