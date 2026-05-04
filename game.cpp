@@ -1,8 +1,4 @@
 #include "game.hpp"
-#include <iostream>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <random>
 
 constexpr int TARGET_FPS = 60;
 constexpr int FRAME_DELAY = 1000/ TARGET_FPS;
@@ -15,7 +11,6 @@ game::~game(){
 
 bool game::init(string name, int windowWidth, int windowHeight){
     if (SDL_Init(SDL_INIT_VIDEO) != 0) return false;
-    
     window = SDL_CreateWindow(name.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_SHOWN);
     if (!window) return false;
     
@@ -23,46 +18,51 @@ bool game::init(string name, int windowWidth, int windowHeight){
     if (!renderer) return false;
     if (TTF_Init() == -1) return false;
 
-    font = TTF_OpenFont("font.ttf", 24);
+    font = TTF_OpenFont("assets/fonts/font.ttf", 24);
     if (!font) return false;
 
     IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
     
-    moleTex = LoadTexture("assets/mole.png");
+    moleTex = LoadTexture("assets/textures/mole.png");
     if (!moleTex) return false;
 
-    backgroundTex = LoadTexture("assets/bg.png");
+    backgroundTex = LoadTexture("assets/textures/bg.png");
     if (!backgroundTex) return false;
     
-    SDL_QueryTexture(moleTex, nullptr, nullptr, &moleDst.w, &moleDst.h);
+    holeTex = LoadTexture("assets/textures/hole.png");
+    if (!holeTex) return false;
+
+    int holeImgW, holeImgH;
+    SDL_QueryTexture(holeTex, nullptr, nullptr, &holeImgW, &holeImgH);
     
-    int rows = 3;
-    int cols = 3;
-    int holeSize = 100;
+    int moleImgW, moleImgH;
+    SDL_QueryTexture(moleTex, nullptr, nullptr, &moleImgW, &moleImgH);
+    
+    int cellSize = 160;
 
-    int spacingX = (windowWidth - (cols * holeSize)) / (cols + 1);
-    int spacingY = (windowHeight - (rows * holeSize)) / (rows + 1);
+    SDL_Point customPositions[9] = {
+        {180, 180}, {350, 160},  {520, 200},
+        {130, 300}, {320, 320}, {500,300},
+        {160, 430}, {330, 470}, {490, 455}
+    };
 
-    int index = 0;
     srand(static_cast<unsigned int>(time(nullptr)));
 
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            holes[index].w = holeSize;
-            holes[index].h = holeSize;
-            holes[index].x = spacingX + j * (holeSize + spacingX);
-            holes[index].y = spacingY + i * (holeSize + spacingY);
+    for (int i = 0; i < 9; ++i) {
+        holes[i].w = cellSize;
+        holes[i].h = (cellSize * holeImgH) / holeImgW;
+        
+        holes[i].x = customPositions[i].x;
+        holes[i].y = customPositions[i].y;
 
-            moles[index].w = static_cast<int>(holeSize);
-            moles[index].h = static_cast<int>(holeSize);
-            moles[index].x = holes[index].x + (holes[index].w - moles[index].w) / 2;
-            moles[index].y = holes[index].y + (holes[index].h - moles[index].h) / 2;
+        moles[i].w = static_cast<int>(cellSize * 0.35); 
+        moles[i].h = (moles[i].w * moleImgH) / moleImgW; 
+        
+        moles[i].x = holes[i].x + (holes[i].w - moles[i].w) / 2;
+        moles[i].y = holes[i].y + (holes[i].h - moles[i].h) / 2 -52;
 
-            isVisible[index] = false; 
-            moleTimers[index] = 0.0f;
-
-            index++;
-        }
+        isVisible[i] = false; 
+        moleTimers[i] = 0.0f;
     }
 
     isRunning = true;
@@ -100,11 +100,9 @@ void game::processInput(){
             {
                 cout << "Oyun kapatiliyor..." << endl;
                 isRunning = false;
+                break;
             }
             break;
-        // case SDL_MOUSEMOTION:
-        //     cout << "Mouse hareketi: (" << event.motion.x << ", " << event.motion.y << ")" << endl;
-        //     break;
         case SDL_MOUSEBUTTONDOWN:
             if (event.button.button == SDL_BUTTON_LEFT)
             {
@@ -114,17 +112,10 @@ void game::processInput(){
                 for (int i = 0; i < 9; ++i) {
                     if (isVisible[i] && SDL_PointInRect(&mousePoint, &moles[i])) 
                     {
-                        for (int i = 0; i < 9; ++i) {
-                            if (isVisible[i] && SDL_PointInRect(&mousePoint, &moles[i])) 
-                            {
-                                cout << i << ". kostebege vurdun!" << endl;
-                                isVisible[i] = false;
+                        cout << i << ". kostebege vurdun!" << endl;
+                        isVisible[i] = false;
 
-                                score += 10; 
-                                
-                                break;
-                            }
-                        }
+                        score += 10;
                     }
                 }
             }
@@ -136,11 +127,6 @@ void game::processInput(){
 }
 
 void game::update(float dt){
-    // molePos.x += moleVel.x*dt;
-    // molePos.y += moleVel.y*dt;
-    // if (molePos.x < 0 || molePos.x + moleDst.w > windowWidth) moleVel.x *= -1;
-    // if (molePos.y < 0 || molePos.y + moleDst.h > windowHeight) moleVel.y *= -1;
-    
     spawnTimer += dt;
 
     if (spawnTimer >= currentSpawnDelay) {
@@ -168,40 +154,40 @@ void game::update(float dt){
 }
 
 void game::render(){
-    
-    // SDL_SetRenderDrawColor(renderer, 125, 30, 200, 255);
     SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, backgroundTex, NULL, NULL);
-    
-    SDL_SetRenderDrawColor(renderer, 50, 25, 10, 255); 
+    RQ.add({backgroundTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 0});
+
     for (int i = 0; i < 9; ++i) {
-        SDL_RenderFillRect(renderer, &holes[i]); 
+        RQ.add({holeTex, holes[i], {0, 0, 0, 0}, 1}); 
     }
 
     for (int i = 0; i < 9; ++i) {
         if (isVisible[i]) {
-            SDL_RenderCopy(renderer, moleTex, nullptr, &moles[i]);
+            RQ.add({moleTex, moles[i], {0, 0, 0, 0}, 2});
         }
     }
-    // SDL_Rect molePng {100, 200, 128, 128};
-    // SDL_RenderCopy(renderer, testTexture, nullptr, &molePng);
+
+    string scoreText = "Skor: " + to_string(score);
+    SDL_Color textColor = {0, 0, 0, 255};
+    SDL_Surface* textSurface = TTF_RenderText_Solid(font, scoreText.c_str(), textColor);
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
     
-    scoreText = "Skor: " + to_string(score);
-    textColor = {255, 255, 255, 255};
-    textSurface = TTF_RenderText_Solid(font, scoreText.c_str(), textColor);
-    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    textRect.x = 20;
+    SDL_Rect textRect; 
+    textRect.x = windowWidth/2 - 40;
     textRect.y = 20;
     textRect.w = textSurface->w;
     textRect.h = textSurface->h;
-    
-    SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+
+    RQ.add({textTexture, textRect, {0, 0, 0, 0}, 10});
+
+    RQ.flush(renderer);
+
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
 
     SDL_RenderPresent(renderer);
 }
-
+            
 void game::shutdown(){
     if(font) {
         TTF_CloseFont(font);
@@ -221,6 +207,10 @@ void game::shutdown(){
     if (backgroundTex) {
         SDL_DestroyTexture(backgroundTex);
         backgroundTex = nullptr;
+    }
+    if (holeTex) {
+        SDL_DestroyTexture(holeTex);
+        holeTex = nullptr;
     }
     
     SDL_Quit();
