@@ -2,12 +2,14 @@
 
 #include <SDL2/SDL.H>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
-#include <SDL2/SDL_ttf.h>
 #include <string>
 #include "renderQueue.h"
+
+struct TTF_Font;
 
 using namespace std;
 

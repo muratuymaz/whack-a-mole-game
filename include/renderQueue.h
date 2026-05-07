@@ -24,7 +24,7 @@ public:
         for (const auto& s : sprites) SDL_RenderCopy(r, s.tex, (s.src.w ? &s.src: nullptr), &s.dst);
         sprites.clear();
     }
-    
+
 private:
     vector<Sprite> sprites;
 };

@@ -1,7 +1,5 @@
 #include "game.hpp"
 
-constexpr int TARGET_FPS = 60;
-constexpr int FRAME_DELAY = 1000/ TARGET_FPS;
 using namespace std;
 
 game::game(){};
@@ -18,7 +16,7 @@ bool game::init(string name, int windowWidth, int windowHeight){
     if (!renderer) return false;
     if (TTF_Init() == -1) return false;
 
-    font = TTF_OpenFont("assets/fonts/font.ttf", 24);
+    font = TTF_OpenFont("assets/fonts/font.ttf", 36);
     if (!font) return false;
 
     IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
@@ -109,12 +107,14 @@ void game::processInput(){
                 int mouseX = event.button.x;
                 int mouseY = event.button.y;
                 SDL_Point mousePoint = { mouseX, mouseY };
+                static int index = 1;
                 for (int i = 0; i < 9; ++i) {
                     if (isVisible[i] && SDL_PointInRect(&mousePoint, &moles[i])) 
                     {
-                        cout << i << ". kostebege vurdun!" << endl;
+                        cout << index << ". kostebege vurdun!" << endl;
                         isVisible[i] = false;
 
+                        index++;
                         score += 10;
                     }
                 }
@@ -167,7 +167,7 @@ void game::render(){
         }
     }
 
-    string scoreText = "Skor: " + to_string(score);
+    string scoreText = "Skor:" + to_string(score);
     SDL_Color textColor = {0, 0, 0, 255};
     SDL_Surface* textSurface = TTF_RenderText_Solid(font, scoreText.c_str(), textColor);
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
