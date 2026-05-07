@@ -1,9 +1,6 @@
 tempCodeRunnerFile.cpp
 .vscode
-*.dll
 *.exe
-*.ttf
 Gereksinimler.txt
-*.png
 whack-a-mole-game.code-workspace
 \build
