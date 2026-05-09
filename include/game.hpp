@@ -21,12 +21,12 @@ public:
     void shutdown();
     void run();
     
-    private:
+private:
     void processInput();
     void update(float deltaTime);
     void render();
     
-    private:
+private:
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* LoadTexture(const string& path);
@@ -47,6 +47,9 @@ public:
 
     int score = 0;
     TTF_Font* font;
+
+    float timer = 15.0;
+    bool isDone = false;
 
     bool isRunning = false;
     int windowWidth = 800;

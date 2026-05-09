@@ -79,7 +79,6 @@ void game::run(){
         processInput();
         update(dt);
         render();
-        
     }
 }
 void game::processInput(){
@@ -108,14 +107,17 @@ void game::processInput(){
                 int mouseY = event.button.y;
                 SDL_Point mousePoint = { mouseX, mouseY };
                 static int index = 1;
-                for (int i = 0; i < 9; ++i) {
-                    if (isVisible[i] && SDL_PointInRect(&mousePoint, &moles[i])) 
-                    {
-                        cout << index << ". kostebege vurdun!" << endl;
-                        isVisible[i] = false;
-
-                        index++;
-                        score += 10;
+                if (!isDone)
+                {
+                    for (int i = 0; i < 9; ++i) {
+                        if (isVisible[i] && SDL_PointInRect(&mousePoint, &moles[i])) 
+                        {
+                            cout << index << ". kostebege vurdun!" << endl;
+                            isVisible[i] = false;
+    
+                            index++;
+                            score += 10;
+                        }
                     }
                 }
             }
@@ -128,28 +130,35 @@ void game::processInput(){
 
 void game::update(float dt){
     spawnTimer += dt;
-
-    if (spawnTimer >= currentSpawnDelay) {
-        spawnTimer = 0.0f;
-        
-        currentSpawnDelay = 0.5f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 1.5f));
-
-        int randomHole = rand() % 9;
-        
-        if (!isVisible[randomHole]) {
-            isVisible[randomHole] = true;
-            moleTimers[randomHole] = 0.0f;
-        }
-    }
-
-    for (int i = 0; i < 9; ++i) {
-        if (isVisible[i]) {
-            moleTimers[i] += dt;
-
-            if (moleTimers[i] >= 1.5f) {
-                isVisible[i] = false;
+    if (!isDone)
+    {
+        timer -= dt;
+        if (spawnTimer >= currentSpawnDelay) {
+            spawnTimer = 0.0f;
+            
+            currentSpawnDelay = 0.5f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / 1.5f));
+    
+            int randomHole = rand() % 9;
+            
+            if (!isVisible[randomHole]) {
+                isVisible[randomHole] = true;
+                moleTimers[randomHole] = 0.0f;
             }
         }
+    
+        for (int i = 0; i < 9; ++i) {
+            if (isVisible[i]) {
+                moleTimers[i] += dt;
+    
+                if (moleTimers[i] >= 1.5f) {
+                    isVisible[i] = false;
+                }
+            }
+        }
+    }
+    if (timer <= 0) {
+        timer = 0;
+        isDone = true;
     }
 }
 
@@ -173,17 +182,32 @@ void game::render(){
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
     
     SDL_Rect textRect; 
-    textRect.x = windowWidth/2 - 40;
-    textRect.y = 20;
     textRect.w = textSurface->w;
     textRect.h = textSurface->h;
+    textRect.x = (windowWidth - textSurface->w) / 2; 
+    textRect.y = 20;
 
     RQ.add({textTexture, textRect, {0, 0, 0, 0}, 10});
+
+    string timerText = "Time:" + to_string((int)(timer));
+    SDL_Color timerColor = {0, 0, 0, 255};
+    SDL_Surface* timerSurface = TTF_RenderText_Solid(font, timerText.c_str(), timerColor);
+    SDL_Texture* timerTexture = SDL_CreateTextureFromSurface(renderer, timerSurface);
+    
+    SDL_Rect timerRect;
+    timerRect.w = timerSurface->w;
+    timerRect.h = timerSurface->h;
+    timerRect.x = windowWidth - timerSurface->w - 20; 
+    timerRect.y = 20;
+
+    RQ.add({timerTexture, timerRect, {0, 0, 0, 0}, 10});
 
     RQ.flush(renderer);
 
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
+    SDL_FreeSurface(timerSurface);
+    SDL_DestroyTexture(timerTexture);
 
     SDL_RenderPresent(renderer);
 }
