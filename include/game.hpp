@@ -52,6 +52,7 @@ private:
     bool isDone = false;
 
     bool isRunning = false;
+    bool isFullscreen = false;
     int windowWidth = 800;
     int windowHeight = 600;
 };

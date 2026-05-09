@@ -14,6 +14,8 @@ bool game::init(string name, int windowWidth, int windowHeight){
     
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) return false;
+    SDL_RenderSetLogicalSize(renderer, windowWidth, windowHeight);
+    
     if (TTF_Init() == -1) return false;
 
     font = TTF_OpenFont("assets/fonts/font.ttf", 36);
@@ -98,6 +100,12 @@ void game::processInput(){
                 cout << "Oyun kapatiliyor..." << endl;
                 isRunning = false;
                 break;
+            }
+            if (event.key.keysym.sym == SDLK_F11) {
+                isFullscreen = !isFullscreen;
+                if (isFullscreen) {
+                    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+                } else SDL_SetWindowFullscreen(window, 0); 
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
