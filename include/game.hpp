@@ -31,15 +31,18 @@ private:
     SDL_Renderer* renderer;
     SDL_Texture* LoadTexture(const string& path);
     
-    SDL_Texture* moleTex = nullptr;
+    SDL_Texture* moleTex= nullptr;
+    SDL_Texture* moleHitTex= nullptr;
     SDL_Texture* backgroundTex = nullptr;
 
     renderQueue RQ;
 
     SDL_Rect holes[9];
     SDL_Rect moles[9];
+    SDL_Rect hitMoles[9];
     SDL_Texture* holeTex = nullptr;
     bool isVisible[9];
+    bool isHit[9];
 
     float spawnTimer = 0.0f;
     float currentSpawnDelay = 1.0f;

@@ -26,6 +26,9 @@ bool game::init(string name, int windowWidth, int windowHeight){
     moleTex = LoadTexture("assets/textures/mole.png");
     if (!moleTex) return false;
 
+    moleHitTex = LoadTexture("assets/textures/whacked-mole.png");
+    if (!moleHitTex) return false;
+
     backgroundTex = LoadTexture("assets/textures/bg.png");
     if (!backgroundTex) return false;
     
@@ -37,6 +40,9 @@ bool game::init(string name, int windowWidth, int windowHeight){
     
     int moleImgW, moleImgH;
     SDL_QueryTexture(moleTex, nullptr, nullptr, &moleImgW, &moleImgH);
+    
+    int moleHitImgW, moleHitImgH;
+    SDL_QueryTexture(moleHitTex, nullptr, nullptr, &moleHitImgW, &moleHitImgH);
     
     int cellSize = 160;
 
@@ -60,8 +66,15 @@ bool game::init(string name, int windowWidth, int windowHeight){
         
         moles[i].x = holes[i].x + (holes[i].w - moles[i].w) / 2;
         moles[i].y = holes[i].y + (holes[i].h - moles[i].h) / 2 -52;
+        
+        hitMoles[i].w = static_cast<int>(cellSize * 0.47); 
+        hitMoles[i].h = (hitMoles[i].w * moleHitImgH) / moleHitImgW; 
+        
+        hitMoles[i].x = holes[i].x + (holes[i].w - hitMoles[i].w) / 2;
+        hitMoles[i].y = holes[i].y + (holes[i].h - hitMoles[i].h) / 2 -52;
 
-        isVisible[i] = false; 
+        isVisible[i] = false;
+        isHit[i] = false;
         moleTimers[i] = 0.0f;
     }
 
@@ -121,7 +134,8 @@ void game::processInput(){
                         if (isVisible[i] && SDL_PointInRect(&mousePoint, &moles[i])) 
                         {
                             cout << index << ". kostebege vurdun!" << endl;
-                            isVisible[i] = false;
+                            isHit[i] = true;
+                            moleTimers[i] = 0.0f;
     
                             index++;
                             score += 10;
@@ -157,9 +171,16 @@ void game::update(float dt){
         for (int i = 0; i < 9; ++i) {
             if (isVisible[i]) {
                 moleTimers[i] += dt;
-    
-                if (moleTimers[i] >= 1.5f) {
+                if (!isHit)
+                {
+                    if (moleTimers[i] >= 1.5f) {
                     isVisible[i] = false;
+                    }
+                }else {
+                    if (moleTimers[i] >= 1.0f) {
+                        isVisible[i] = false;
+                        isHit[i] = false;
+                    }
                 }
             }
         }
@@ -180,7 +201,12 @@ void game::render(){
 
     for (int i = 0; i < 9; ++i) {
         if (isVisible[i]) {
-            RQ.add({moleTex, moles[i], {0, 0, 0, 0}, 2});
+            if (!isHit[i])
+            {
+                RQ.add({moleTex, moles[i], {0, 0, 0, 0}, 2});
+            }else {
+                RQ.add({moleHitTex, hitMoles[i], {0, 0, 0, 0}, 2});
+            }
         }
     }
 
@@ -195,7 +221,7 @@ void game::render(){
     textRect.x = (windowWidth - textSurface->w) / 2; 
     textRect.y = 20;
 
-    RQ.add({textTexture, textRect, {0, 0, 0, 0}, 10});
+    RQ.add({textTexture, textRect, {0, 0, 0, 0}, 1});
 
     string timerText = "Time:" + to_string((int)(timer));
     SDL_Color timerColor = {0, 0, 0, 255};
@@ -208,7 +234,7 @@ void game::render(){
     timerRect.x = windowWidth - timerSurface->w - 20; 
     timerRect.y = 20;
 
-    RQ.add({timerTexture, timerRect, {0, 0, 0, 0}, 10});
+    RQ.add({timerTexture, timerRect, {0, 0, 0, 0}, 2});
 
     RQ.flush(renderer);
 
@@ -243,6 +269,14 @@ void game::shutdown(){
     if (holeTex) {
         SDL_DestroyTexture(holeTex);
         holeTex = nullptr;
+    }
+    if (moleTex) {
+        SDL_DestroyTexture(moleTex);
+        moleTex = nullptr;
+    }
+    if (moleHitTex) {
+        SDL_DestroyTexture(moleHitTex);
+        moleHitTex = nullptr;
     }
     
     SDL_Quit();
