@@ -35,6 +35,7 @@ bool game::init(string name, int windowWidth, int windowHeight){
     
     barTex = LoadTexture("assets/textures/bar.png");
     if (!barTex) return false;
+    int barImgW, barImgH;
     SDL_QueryTexture(barTex, nullptr, nullptr, &barImgW, &barImgH);
     
     holeTex = LoadTexture("assets/textures/hole.png");
@@ -56,6 +57,10 @@ bool game::init(string name, int windowWidth, int windowHeight){
     menuBgTex = LoadTexture("assets/textures/menu.png");
     if (!menuBgTex) return false;
 
+    // High Score table
+    highScoreTable = LoadTexture("assets/textures/high-scores-table.png");
+    if(!highScoreTable) return false;
+
     // Oyna Butonu
     playButton.tex = LoadTexture("assets/textures/button.png");
     playButton.rect.w = 200;
@@ -69,10 +74,18 @@ bool game::init(string name, int windowWidth, int windowHeight){
     exitButton.rect.h = 80;
     exitButton.rect.x = (windowWidth - exitButton.rect.w) / 2;
     exitButton.rect.y = (windowHeight / 2) + 40;
+    
+    // High Score Butonu
+    highScoreButton.tex = LoadTexture("assets/textures/button.png");
+    highScoreButton.rect.w = 200;
+    highScoreButton.rect.h = 80;
+    highScoreButton.rect.x = (windowWidth - highScoreButton.rect.w) / 2;
+    highScoreButton.rect.y = (windowHeight / 2) + 140;
 
     SDL_Color btnTextColor = {0, 0, 0, 255}; 
 
-    SDL_Surface* playSurface = TTF_RenderText_Solid(font, "OYNA", btnTextColor);
+    // Yazi konumlari
+    SDL_Surface* playSurface = TTF_RenderText_Solid(font, "PLAY", btnTextColor);
     playButton.textTex = SDL_CreateTextureFromSurface(renderer, playSurface);
     playButton.textRect.w = playSurface->w;
     playButton.textRect.h = playSurface->h;
@@ -80,26 +93,41 @@ bool game::init(string name, int windowWidth, int windowHeight){
     playButton.textRect.y = playButton.rect.y + (playButton.rect.h - playButton.textRect.h) / 2;
     SDL_FreeSurface(playSurface);
 
-    SDL_Surface* exitSurface = TTF_RenderText_Solid(font, "CIKIS", btnTextColor);
+    SDL_Surface* exitSurface = TTF_RenderText_Solid(font, "EXIT", btnTextColor);
     exitButton.textTex = SDL_CreateTextureFromSurface(renderer, exitSurface);
     exitButton.textRect.w = exitSurface->w;
     exitButton.textRect.h = exitSurface->h;
     exitButton.textRect.x = exitButton.rect.x + (exitButton.rect.w - exitButton.textRect.w) / 2;
     exitButton.textRect.y = exitButton.rect.y + (exitButton.rect.h - exitButton.textRect.h) / 2;
     SDL_FreeSurface(exitSurface);
+    
+    SDL_Surface* highScoreSurface = TTF_RenderText_Solid(font, "HIGH SCORES", btnTextColor);
+    highScoreButton.textTex = SDL_CreateTextureFromSurface(renderer, highScoreSurface);
+    highScoreButton.textRect.w = highScoreSurface->w;
+    highScoreButton.textRect.h = highScoreSurface->h;
+    highScoreButton.textRect.x = highScoreButton.rect.x + (highScoreButton.rect.w - highScoreButton.textRect.w) / 2;
+    highScoreButton.textRect.y = highScoreButton.rect.y + (highScoreButton.rect.h - highScoreButton.textRect.h) / 2;
+    SDL_FreeSurface(highScoreSurface);
 
     // Baslik
-    titleTex = LoadTexture("assets/textures/title1.png");
+    titleTex = LoadTexture("assets/textures/whack-a-mole-title.png");
     if (!titleTex) return false;
     
     int titleW, titleH;
     SDL_QueryTexture(titleTex, nullptr, nullptr, &titleW, &titleH);
     
-    float scale = 0.5f;
-    titleRect.w = (int)(titleW * scale);
-    titleRect.h = (int)(titleH * scale);
+    // Baslik boyutu
+    float scaleTitle = 0.7f;
+    titleRect.w = (int)(titleW * scaleTitle);
+    titleRect.h = (int)(titleH * scaleTitle);
     titleRect.x = (windowWidth - titleRect.w) / 2;
     titleRect.y = 40;
+
+    // Bar boyutu
+    float scaleBar = 0.38f;
+    barRect.w = (int)(barImgW * scaleBar);
+    barRect.h = (int)(barImgH* scaleBar);
+    barRect.x = (windowWidth - barRect.w) / 2;
     
     int cellSize = 160;
     SDL_Point customPositions[9] = {
@@ -110,7 +138,7 @@ bool game::init(string name, int windowWidth, int windowHeight){
     
     srand(static_cast<unsigned int>(time(nullptr)));
     
-    // Hole position
+    // Hole mole position
     for (int i = 0; i < 9; ++i) {
         holes[i].w = cellSize;
         holes[i].h = (cellSize * holeImgH) / holeImgW;
@@ -134,7 +162,8 @@ bool game::init(string name, int windowWidth, int windowHeight){
         isHit[i] = false;
         moleTimers[i] = 0.0f;
     }
-    
+
+    loadHighScores();
     currentState = MENU;
     isRunning = true;
     return true;
@@ -201,8 +230,18 @@ void game::processInput(){
                 {
                     isRunning = false;
                 }
-            } else if (currentState == PLAYING)
+                // High Score butonuna tiklandiysa:
+                else if (highScoreButton.isClicked(mouseX, mouseY))
+                {
+                    currentState = HIGH_SCORE;
+                }
+            } else if (currentState == HIGH_SCORE)
             {
+                if (menuButton.isClicked(mouseX, mouseY))
+                {
+                    currentState = MENU;
+                }
+            } else if (currentState == PLAYING) {
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {
                     SDL_Point mousePoint = { mouseX, mouseY };
@@ -268,17 +307,17 @@ void game::update(float dt){
                 }
             }
         }
-        if (timer <= 0) {
-            timer = 0;
+        if (timer <= 0.0f && !isDone) {
+            timer = 0.0f;
             isDone = true;
+            // Yuksek skorlari listeye kaydet
+            checkNewHighScore(score);
         }
     }
 }
-
+// Ekrana cizdirmek icin
 void game::render(){
     SDL_RenderClear(renderer);
-    RQ.add({backgroundTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 0});
-    // RQ.add({barTex, {0, 0, 2444, 225}, {0, 0, 0, 0}, 0}); DUZENLENECEK !!!!
     
     // Menudeyse menu ekranini cizdir
     if (currentState == MENU) {
@@ -288,9 +327,12 @@ void game::render(){
         RQ.add({playButton.textTex, playButton.textRect, {0, 0, 0, 0}, 6});
         RQ.add({exitButton.tex, exitButton.rect, {0, 0, 0, 0}, 5});
         RQ.add({exitButton.textTex, exitButton.textRect, {0, 0, 0, 0}, 6});
+        RQ.add({highScoreButton.tex, highScoreButton.rect, {0, 0, 0, 0}, 5});
+        RQ.add({highScoreButton.textTex, highScoreButton.textRect, {0, 0, 0, 0}, 6});
 
     } else if (currentState == PLAYING) { /* Oyundaysa oyun ekranini cizdir */
         RQ.add({backgroundTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 0});
+        RQ.add({barTex, {-40, 0, barRect.w, barRect.h}, {0, 0, 0, 0}, 1});
 
         for (int i = 0; i < 9; ++i) {
             RQ.add({holeTex, holes[i], {0, 0, 0, 0}, 1}); 
@@ -315,7 +357,7 @@ void game::render(){
         textRect.w = textSurface->w;
         textRect.h = textSurface->h;
         textRect.x = (windowWidth - textSurface->w) / 2; 
-        textRect.y = 20;
+        textRect.y = 22;
 
         RQ.add({textTexture, textRect, {0, 0, 0, 0}, 1});
         // Timer
@@ -328,9 +370,61 @@ void game::render(){
         timerRect.w = timerSurface->w;
         timerRect.h = timerSurface->h;
         timerRect.x = windowWidth - timerSurface->w - 20; 
-        timerRect.y = 20;
+        timerRect.y = 22;
 
         RQ.add({timerTexture, timerRect, {0, 0, 0, 0}, 2});
+    } else if (currentState == HIGH_SCORE) { /*High Scoredaysa skorlari cizdir */
+        RQ.add({menuBgTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 0});
+
+        SDL_Color textColor = {255, 255, 0, 255};
+
+        for (int i = 0; i < highScores.size(); ++i) {
+            string text = to_string(i + 1) + ". " + to_string(highScores[i]);
+            
+            scores = TTF_RenderText_Solid(font, text.c_str(), textColor);
+            scoresTex = SDL_CreateTextureFromSurface(renderer, scores);
+            
+            SDL_Rect r;
+            r.w = scores->w; r.h = scores->h;
+            r.x = (windowWidth - r.w) / 2;
+            r.y = 150 + (i * 60);
+            
+            RQ.add({scoresTex, r, {0, 0, 0, 0}, 5});
+            
+            SDL_FreeSurface(scores);
+        }
+
+        int highScoreW, highScoreH;
+        float scale = 0.2f;
+        
+        SDL_QueryTexture(highScoreTable, nullptr, nullptr, &highScoreW, &highScoreH);
+        
+        highScoreRect.w = (int)(highScoreW * scale);
+        highScoreRect.h = (int)(highScoreH * scale);
+        highScoreRect.x = (windowWidth - highScoreRect.w) / 2;
+        highScoreRect.y = 40;
+        
+        RQ.add({highScoreTable, {highScoreRect.x, highScoreRect.y, highScoreRect.w, highScoreRect.h}, {0, 0, 0, 0}, 2});
+        
+        // Menu Butonu
+        menuButton.tex = LoadTexture("assets/textures/button.png");
+        menuButton.rect.w = 200;
+        menuButton.rect.h = 80;
+        menuButton.rect.x = (windowWidth - menuButton.rect.w) / 2;
+        menuButton.rect.y = (windowHeight/2) +170 ;
+        
+        SDL_Color btnTextColor = {0, 0, 0, 255};
+        SDL_Surface* menuSurface = TTF_RenderText_Solid(font, "MENU", btnTextColor);
+        
+        menuButton.textTex = SDL_CreateTextureFromSurface(renderer, menuSurface);
+        menuButton.textRect.w = menuSurface->w;
+        menuButton.textRect.h = menuSurface->h;
+        menuButton.textRect.x = menuButton.rect.x + (menuButton.rect.w - menuButton.textRect.w) / 2;
+        menuButton.textRect.y = menuButton.rect.y + (menuButton.rect.h - menuButton.textRect.h) / 2;
+        
+        RQ.add({menuButton.tex, menuButton.rect, {0, 0, 0, 0}, 5});
+        RQ.add({menuButton.textTex, menuButton.textRect, {0, 0, 0, 0}, 6});
+        SDL_FreeSurface(menuSurface);
     }
 
     RQ.flush(renderer);
@@ -341,7 +435,7 @@ void game::render(){
     
     SDL_RenderPresent(renderer);
 }
-            
+// Acilan seyleri bellek uzerinden temizlemek icin
 void game::shutdown(){
     if(font) {
         TTF_CloseFont(font);
@@ -386,6 +480,10 @@ void game::shutdown(){
         SDL_DestroyTexture(menuBgTex);
         menuBgTex = nullptr;
     }
+    if (highScoreTable) {
+        SDL_DestroyTexture(highScoreTable);
+        highScoreTable = nullptr;
+    }
     if (playButton.tex) {
         SDL_DestroyTexture(playButton.tex);
         playButton.tex = nullptr;
@@ -400,12 +498,15 @@ void game::shutdown(){
     if (exitButton.textTex) {
         SDL_DestroyTexture(exitButton.textTex);
     }
+    if (scoresTex) {
+        SDL_DestroyTexture(scoresTex);
+    }
     
     SDL_Quit();
 }
 
+// Texture loading
 SDL_Texture* game::LoadTexture(const string& path){
-    // Texture loading
     SDL_Surface* surface = IMG_Load(path.c_str());
     if (!surface)
     {
@@ -416,4 +517,41 @@ SDL_Texture* game::LoadTexture(const string& path){
     SDL_FreeSurface(surface);
 
     return texture;
+}
+// En yuksek skorlari yuklemek icin
+void game::loadHighScores() {
+    highScores.clear();
+    vector<int> allScores;
+    
+    ifstream file("assets/data/highscores.txt");
+    if (file.is_open()) {
+        int s;
+        while (file >> s) {
+            allScores.push_back(s);
+        }
+        file.close();
+    }
+
+    // Siralama
+    sort(allScores.begin(), allScores.end(), greater<int>());
+
+    // 5 tane skoru yukle, 5ten azsa 0 koy
+    for (int i = 0; i < 5; ++i) {
+        if (i < allScores.size()) {
+            highScores.push_back(allScores[i]);
+        } else {
+            highScores.push_back(0); 
+        }
+    }
+}
+// High Score kontrolu
+void game::checkNewHighScore(int currentScore) {
+    // dosyayi sifirlamadan yeni veriyi sona eklemek icin
+    ofstream file("assets/data/highscores.txt", ios::app);
+    if (file.is_open()) {
+        file << currentScore << "\n";
+        file.close();
+    }
+    
+    loadHighScores();
 }
