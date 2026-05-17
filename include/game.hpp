@@ -46,10 +46,12 @@ private:
     SDL_Texture* timerTexture = nullptr;
     SDL_Surface* textSurface = nullptr;
     SDL_Texture* textTexture = nullptr;
+    SDL_Texture* gameOverTex = nullptr;
+    SDL_Surface* gameOverSurface = nullptr;
     SDL_Rect timerRect;
     SDL_Rect textRect;
     SDL_Rect barRect;
-    
+    SDL_Rect gameOverTextRect;
 
     renderQueue RQ;
 
@@ -65,6 +67,9 @@ private:
     float moleTimers[9] = {0.0f};
 
     int score = 0;
+    SDL_Rect scoreGOTextRect;
+    SDL_Surface* scoreGOTextSurface = nullptr;
+    SDL_Texture* scoreGOTextTex = nullptr;
     TTF_Font* font;
 
     float timer = 15.0;
@@ -76,10 +81,23 @@ private:
     SDL_Texture* menuBgTex = nullptr;
     SDL_Texture* highScoreTable = nullptr;
     SDL_Rect highScoreRect;
+    SDL_Texture* highScoreTextTex = nullptr;
+    SDL_Surface* highScoreTextSurface = nullptr;
+    SDL_Rect highScoreTextRect;
+    SDL_Texture* gameOverTitleTextTex = nullptr;
+    SDL_Surface* gameOverTitleTextSurface = nullptr;
+    SDL_Rect gameOverTitleTextRect;
+    SDL_Texture* gameOverTable = nullptr;
+    SDL_Rect gameOverRect;
+    SDL_Texture* overlayTex = nullptr;
     Button playButton;
     Button exitButton;
     Button highScoreButton;
     Button menuButton;
+    Button menuGOButton;
+    Button retryButton;
+    Button musicButton;
+    bool isMusicRunning;
 
     bool isRunning = false;
     bool isFullscreen = false;

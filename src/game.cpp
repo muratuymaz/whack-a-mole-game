@@ -61,6 +61,15 @@ bool game::init(string name, int windowWidth, int windowHeight){
     highScoreTable = LoadTexture("assets/textures/high-scores-table.png");
     if(!highScoreTable) return false;
 
+    // Game Over table
+    gameOverTable = LoadTexture("assets/textures/game-over-table.png");
+    if(!gameOverTable) return false;
+
+    // Arkaplan Bluru icin
+    overlayTex = LoadTexture("assets/textures/black.png");
+    if(!overlayTex) return false;
+    SDL_SetTextureAlphaMod(overlayTex, 150);
+
     // Oyna Butonu
     playButton.tex = LoadTexture("assets/textures/button.png");
     playButton.rect.w = 200;
@@ -73,18 +82,85 @@ bool game::init(string name, int windowWidth, int windowHeight){
     exitButton.rect.w = 200;
     exitButton.rect.h = 80;
     exitButton.rect.x = (windowWidth - exitButton.rect.w) / 2;
-    exitButton.rect.y = (windowHeight / 2) + 40;
+    exitButton.rect.y = (windowHeight / 2) + 140;
     
     // High Score Butonu
     highScoreButton.tex = LoadTexture("assets/textures/button.png");
     highScoreButton.rect.w = 200;
     highScoreButton.rect.h = 80;
     highScoreButton.rect.x = (windowWidth - highScoreButton.rect.w) / 2;
-    highScoreButton.rect.y = (windowHeight / 2) + 140;
+    highScoreButton.rect.y = (windowHeight / 2) + 40;
 
-    SDL_Color btnTextColor = {0, 0, 0, 255}; 
+    SDL_Color btnTextColor = {0, 0, 0, 255};
 
-    // Yazi konumlari
+    // Menu Butonu
+    menuButton.tex = LoadTexture("assets/textures/button.png");
+    menuButton.rect.w = 200;
+    menuButton.rect.h = 80;
+    menuButton.rect.x = (windowWidth - menuButton.rect.w) / 2;
+    menuButton.rect.y = (windowHeight/2) + 170;
+    
+    SDL_Surface* menuSurface = TTF_RenderText_Solid(font, "MENU", btnTextColor);
+    menuButton.textTex = SDL_CreateTextureFromSurface(renderer, menuSurface);
+    menuButton.textRect.w = menuSurface->w;
+    menuButton.textRect.h = menuSurface->h;
+    menuButton.textRect.x = menuButton.rect.x + (menuButton.rect.w - menuButton.textRect.w) / 2;
+    menuButton.textRect.y = menuButton.rect.y + (menuButton.rect.h - menuButton.textRect.h) / 2;
+    SDL_FreeSurface(menuSurface);
+    
+    menuGOButton.tex = LoadTexture("assets/textures/button.png");
+    menuGOButton.rect.w = 200;
+    menuGOButton.rect.h = 80;
+    menuGOButton.rect.x = (windowWidth - menuGOButton.rect.w) / 2;
+    menuGOButton.rect.y = (windowHeight/2) + 100;
+    
+    SDL_Surface* menuGOSurface = TTF_RenderText_Solid(font, "MENU", btnTextColor);
+    menuGOButton.textTex = SDL_CreateTextureFromSurface(renderer, menuGOSurface);
+    menuGOButton.textRect.w = menuGOSurface->w;
+    menuGOButton.textRect.h = menuGOSurface->h;
+    menuGOButton.textRect.x = menuGOButton.rect.x + (menuGOButton.rect.w - menuGOButton.textRect.w) / 2;
+    menuGOButton.textRect.y = menuGOButton.rect.y + (menuGOButton.rect.h - menuGOButton.textRect.h) / 2;
+    SDL_FreeSurface(menuGOSurface);
+
+    // Retry Butonu
+    retryButton.tex = LoadTexture("assets/textures/retry-button-small.png");
+    retryButton.rect.w = 80;
+    retryButton.rect.h = 80;
+    retryButton.rect.x = (windowWidth - retryButton.rect.w) / 2;
+    retryButton.rect.y = (windowHeight/2);
+
+    string highScoresText = "HIGH SCORES";
+    SDL_Color highScoresTextColor = {0, 0, 0, 255};
+    highScoreTextSurface = TTF_RenderText_Solid(font, highScoresText.c_str(), highScoresTextColor);
+    highScoreTextTex = SDL_CreateTextureFromSurface(renderer, highScoreTextSurface);
+    SDL_FreeSurface(highScoreTextSurface);
+    highScoreTextSurface = nullptr;
+    highScoreTextRect.w = highScoreTextSurface->w;
+    highScoreTextRect.h = highScoreTextSurface->h;
+    highScoreTextRect.x = (windowWidth - highScoreTextSurface->w)/2; 
+    highScoreTextRect.y = 85;
+    
+    string gameOverTitleText = "GAME OVER";
+    SDL_Color gameOverTextColor = {0, 0, 0, 255};
+    gameOverTitleTextSurface = TTF_RenderText_Solid(font, gameOverTitleText.c_str(), gameOverTextColor);
+    gameOverTitleTextTex = SDL_CreateTextureFromSurface(renderer, gameOverTitleTextSurface);
+    SDL_FreeSurface(gameOverTitleTextSurface);
+    gameOverTitleTextSurface = nullptr;
+    gameOverTitleTextRect.w = gameOverTitleTextSurface->w;
+    gameOverTitleTextRect.h = gameOverTitleTextSurface->h;
+    gameOverTitleTextRect.x = (windowWidth - gameOverTitleTextSurface->w)/2; 
+    gameOverTitleTextRect.y = 90;
+
+    int gameOverW, gameOverH;
+    float scale = 0.8f;
+    
+    SDL_QueryTexture(gameOverTable, nullptr, nullptr, &gameOverW, &gameOverH);
+    
+    gameOverRect.w = (int)(gameOverW * scale);
+    gameOverRect.h = (int)(gameOverH * scale);
+    gameOverRect.x = (windowWidth - gameOverRect.w) / 2;
+    gameOverRect.y = 40;
+
     SDL_Surface* playSurface = TTF_RenderText_Solid(font, "PLAY", btnTextColor);
     playButton.textTex = SDL_CreateTextureFromSurface(renderer, playSurface);
     playButton.textRect.w = playSurface->w;
@@ -241,21 +317,33 @@ void game::processInput(){
                 {
                     currentState = MENU;
                 }
+            } else if (currentState == GAME_OVER)
+            {
+                if (retryButton.isClicked(mouseX, mouseY) || menuGOButton.isClicked(mouseX, mouseY))
+                {
+                    score = 0;
+                    timer = 15.0f;
+                    isDone = false;
+                    for (int i = 0; i < 9; ++i) {
+                        isVisible[i] = false;
+                        isHit[i] = false;
+                        moleTimers[i] = 0.0f;
+                    }
+                    if (retryButton.isClicked(mouseX, mouseY)) currentState = PLAYING;
+                    if (menuGOButton.isClicked(mouseX, mouseY)) currentState = MENU;
+                }
             } else if (currentState == PLAYING) {
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {
                     SDL_Point mousePoint = { mouseX, mouseY };
-                    static int index = 1;
                     if (!isDone)
                     {
                         for (int i = 0; i < 9; ++i) {
                             if (!isHit[i] && isVisible[i] && SDL_PointInRect(&mousePoint, &moles[i])) 
                             {
-                                cout << index << ". kostebege vurdun!" << endl;
+                                cout << "kostebege vurdun!" << endl;
                                 isHit[i] = true;
                                 moleTimers[i] = 0.0f;
-        
-                                index++;
                                 score += 10;
                             }
                         }
@@ -312,16 +400,19 @@ void game::update(float dt){
             isDone = true;
             // Yuksek skorlari listeye kaydet
             checkNewHighScore(score);
+            currentState = GAME_OVER;
         }
     }
 }
 // Ekrana cizdirmek icin
 void game::render(){
     SDL_RenderClear(renderer);
-    
+    vector<SDL_Texture*> tempScoreTextures;
+
     // Menudeyse menu ekranini cizdir
     if (currentState == MENU) {
         RQ.add({menuBgTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 0});
+        RQ.add({overlayTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 1});
         RQ.add({titleTex, titleRect, {0, 0, 0, 0}, 4});
         RQ.add({playButton.tex, playButton.rect, {0, 0, 0, 0}, 5});
         RQ.add({playButton.textTex, playButton.textRect, {0, 0, 0, 0}, 6});
@@ -330,9 +421,12 @@ void game::render(){
         RQ.add({highScoreButton.tex, highScoreButton.rect, {0, 0, 0, 0}, 5});
         RQ.add({highScoreButton.textTex, highScoreButton.textRect, {0, 0, 0, 0}, 6});
 
-    } else if (currentState == PLAYING) { /* Oyundaysa oyun ekranini cizdir */
+    } else if (currentState == PLAYING || currentState == GAME_OVER) { /* Oyundaysa oyun ekranini cizdir */
         RQ.add({backgroundTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 0});
-        RQ.add({barTex, {-40, 0, barRect.w, barRect.h}, {0, 0, 0, 0}, 1});
+        if (currentState == PLAYING)
+        {
+            RQ.add({barTex, {-40, 0, barRect.w, barRect.h}, {0, 0, 0, 0}, 1});
+        }
 
         for (int i = 0; i < 9; ++i) {
             RQ.add({holeTex, holes[i], {0, 0, 0, 0}, 1}); 
@@ -349,7 +443,7 @@ void game::render(){
             }
         }
         // Scoreboard
-        string scoreText = "Skor:" + to_string(score);
+        string scoreText = "Score : " + to_string(score);
         SDL_Color textColor = {0, 0, 0, 255};
         textSurface = TTF_RenderText_Solid(font, scoreText.c_str(), textColor);
         textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
@@ -359,24 +453,56 @@ void game::render(){
         textRect.x = (windowWidth - textSurface->w) / 2; 
         textRect.y = 22;
 
-        RQ.add({textTexture, textRect, {0, 0, 0, 0}, 1});
+        if(currentState == PLAYING) RQ.add({textTexture, textRect, {0, 0, 0, 0}, 1});
+        
         // Timer
-        string timerText = "Time:" + to_string((int)(timer));
+        string timerText = "Time : " + to_string((int)(timer));
         SDL_Color timerColor = {0, 0, 0, 255};
         timerSurface = TTF_RenderText_Solid(font, timerText.c_str(), timerColor);
         timerTexture = SDL_CreateTextureFromSurface(renderer, timerSurface);
 
-        timerRect;
         timerRect.w = timerSurface->w;
         timerRect.h = timerSurface->h;
         timerRect.x = windowWidth - timerSurface->w - 20; 
         timerRect.y = 22;
 
-        RQ.add({timerTexture, timerRect, {0, 0, 0, 0}, 2});
+        if(currentState == PLAYING) RQ.add({timerTexture, timerRect, {0, 0, 0, 0}, 2});
+
+        if (currentState == GAME_OVER)
+        {
+            string scoreGOText = "SCORE : " + to_string(score) + "\nWELL DONE!";
+            SDL_Color scoreGOTextColor = {0, 0, 0, 255};
+            // Alt satira gecirmek icin wrapped fonksiyonu
+            TTF_SetFontWrappedAlign(font, TTF_WRAPPED_ALIGN_CENTER);
+            scoreGOTextSurface = TTF_RenderText_Blended_Wrapped(font, scoreGOText.c_str(), scoreGOTextColor, 0);
+            scoreGOTextTex = SDL_CreateTextureFromSurface(renderer, scoreGOTextSurface);
+
+            scoreGOTextRect.w = scoreGOTextSurface->w;
+            scoreGOTextRect.h = scoreGOTextSurface->h;
+            scoreGOTextRect.x = (windowWidth - scoreGOTextSurface->w)/2; 
+            scoreGOTextRect.y = 180;
+            RQ.add({scoreGOTextTex, scoreGOTextRect, {0, 0, 0, 0}, 11});
+
+            // Arkaplan karartmasi
+            RQ.add({overlayTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 8});
+            RQ.add({gameOverTable, {gameOverRect.x, gameOverRect.y, gameOverRect.w, gameOverRect.h}, {0, 0, 0, 0}, 10});
+            RQ.add({gameOverTex, gameOverTextRect, {0, 0, 0, 0}, 11});
+            RQ.add({gameOverTitleTextTex, gameOverTitleTextRect, {0, 0, 0, 0}, 11});
+
+            // Retry Butonu
+            RQ.add({retryButton.tex, retryButton.rect, {0, 0, 0, 0}, 12});
+            
+            // Menu Butonu
+            RQ.add({menuGOButton.tex, menuGOButton.rect, {0, 0, 0, 0}, 12});
+            RQ.add({menuGOButton.textTex, menuGOButton.textRect, {0, 0, 0, 0}, 13});
+        }
+        
     } else if (currentState == HIGH_SCORE) { /*High Scoredaysa skorlari cizdir */
         RQ.add({menuBgTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 0});
-
+        RQ.add({overlayTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 1});
         SDL_Color textColor = {255, 255, 0, 255};
+
+        RQ.add({highScoreTextTex,highScoreTextRect,{0, 0, 0, 0,}, 8});
 
         for (int i = 0; i < highScores.size(); ++i) {
             string text = to_string(i + 1) + ". " + to_string(highScores[i]);
@@ -384,12 +510,14 @@ void game::render(){
             scores = TTF_RenderText_Solid(font, text.c_str(), textColor);
             scoresTex = SDL_CreateTextureFromSurface(renderer, scores);
             
-            SDL_Rect r;
-            r.w = scores->w; r.h = scores->h;
-            r.x = (windowWidth - r.w) / 2;
-            r.y = 150 + (i * 60);
+            SDL_Rect highScoresRect;
+            highScoresRect.w = scores->w;
+            highScoresRect.h = scores->h;
+            highScoresRect.x = (windowWidth - highScoresRect.w) / 2;
+            highScoresRect.y = 140 + (i * 60);
             
-            RQ.add({scoresTex, r, {0, 0, 0, 0}, 5});
+            RQ.add({scoresTex, highScoresRect, {0, 0, 0, 0}, 5});
+            tempScoreTextures.push_back(scoresTex);
             
             SDL_FreeSurface(scores);
         }
@@ -405,33 +533,44 @@ void game::render(){
         highScoreRect.y = 40;
         
         RQ.add({highScoreTable, {highScoreRect.x, highScoreRect.y, highScoreRect.w, highScoreRect.h}, {0, 0, 0, 0}, 2});
-        
+
         // Menu Butonu
-        menuButton.tex = LoadTexture("assets/textures/button.png");
-        menuButton.rect.w = 200;
-        menuButton.rect.h = 80;
-        menuButton.rect.x = (windowWidth - menuButton.rect.w) / 2;
-        menuButton.rect.y = (windowHeight/2) +170 ;
-        
-        SDL_Color btnTextColor = {0, 0, 0, 255};
-        SDL_Surface* menuSurface = TTF_RenderText_Solid(font, "MENU", btnTextColor);
-        
-        menuButton.textTex = SDL_CreateTextureFromSurface(renderer, menuSurface);
-        menuButton.textRect.w = menuSurface->w;
-        menuButton.textRect.h = menuSurface->h;
-        menuButton.textRect.x = menuButton.rect.x + (menuButton.rect.w - menuButton.textRect.w) / 2;
-        menuButton.textRect.y = menuButton.rect.y + (menuButton.rect.h - menuButton.textRect.h) / 2;
-        
         RQ.add({menuButton.tex, menuButton.rect, {0, 0, 0, 0}, 5});
         RQ.add({menuButton.textTex, menuButton.textRect, {0, 0, 0, 0}, 6});
-        SDL_FreeSurface(menuSurface);
     }
 
     RQ.flush(renderer);
-    SDL_FreeSurface(textSurface);
-    SDL_DestroyTexture(textTexture);
-    SDL_FreeSurface(timerSurface);
-    SDL_DestroyTexture(timerTexture);
+
+    for(SDL_Texture* tex : tempScoreTextures) SDL_DestroyTexture(tex);
+    if (scoreGOTextSurface) {
+        SDL_FreeSurface(scoreGOTextSurface);
+        scoreGOTextSurface = nullptr;
+    }
+    if (scoreGOTextTex) {
+        SDL_DestroyTexture(scoreGOTextTex);
+        scoreGOTextTex = nullptr;
+    }
+
+    if (textSurface) {
+        SDL_FreeSurface(textSurface);
+        textSurface = nullptr;
+    }
+    if (textTexture) {
+        SDL_DestroyTexture(textTexture);
+        textTexture = nullptr;
+    }
+    if (timerSurface) {
+        SDL_FreeSurface(timerSurface);
+        timerSurface = nullptr;
+    }
+    if (timerTexture) {
+        SDL_DestroyTexture(timerTexture);
+        timerTexture = nullptr;
+    }
+    if (gameOverTex) {
+        SDL_DestroyTexture(gameOverTex);
+        gameOverTex = nullptr;
+    }
     
     SDL_RenderPresent(renderer);
 }
@@ -484,22 +623,69 @@ void game::shutdown(){
         SDL_DestroyTexture(highScoreTable);
         highScoreTable = nullptr;
     }
+    if (highScoreTextTex) {
+        SDL_DestroyTexture(highScoreTextTex);
+        highScoreTextTex = nullptr;
+    }
+    if (gameOverTitleTextTex) {
+        SDL_DestroyTexture(gameOverTitleTextTex);
+        gameOverTitleTextTex = nullptr;
+    }
     if (playButton.tex) {
         SDL_DestroyTexture(playButton.tex);
         playButton.tex = nullptr;
     }
+    if (playButton.textTex) {
+        SDL_DestroyTexture(playButton.textTex);
+        playButton.textTex = nullptr;
+    }
     if (exitButton.tex) {
         SDL_DestroyTexture(exitButton.tex);
         exitButton.tex = nullptr;
-    }
-    if (playButton.textTex) {
-        SDL_DestroyTexture(playButton.textTex);
-    }
+    }   
     if (exitButton.textTex) {
         SDL_DestroyTexture(exitButton.textTex);
+        exitButton.textTex = nullptr;
     }
-    if (scoresTex) {
-        SDL_DestroyTexture(scoresTex);
+    if (retryButton.tex) {
+        SDL_DestroyTexture(retryButton.tex);
+        retryButton.tex = nullptr;
+    }
+    if (overlayTex) {
+        SDL_DestroyTexture(overlayTex);
+        overlayTex = nullptr;
+    }
+    if (gameOverTable) {
+        SDL_DestroyTexture(gameOverTable);
+        gameOverTable = nullptr;
+    }
+    if (menuGOButton.tex) {
+        SDL_DestroyTexture(menuGOButton.tex);
+        menuGOButton.tex = nullptr;
+    }
+    if (menuGOButton.textTex) { 
+        SDL_DestroyTexture(menuGOButton.textTex);
+        menuGOButton.textTex = nullptr;
+    }
+    if (highScoreButton.tex)
+    {
+        SDL_DestroyTexture(highScoreButton.tex);
+        highScoreButton.tex = nullptr;
+    }
+    if (highScoreButton.textTex)
+    {
+        SDL_DestroyTexture(highScoreButton.textTex);
+        highScoreButton.textTex = nullptr;
+    }
+    if (menuButton.tex)
+    {
+        SDL_DestroyTexture(menuButton.tex);
+        menuButton.tex = nullptr;
+    }
+    if (menuButton.textTex)
+    {
+        SDL_DestroyTexture(menuButton.textTex);
+        menuButton.textTex = nullptr;
     }
     
     SDL_Quit();
