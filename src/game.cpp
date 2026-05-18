@@ -106,7 +106,7 @@ bool game::init(string name, int windowWidth, int windowHeight){
     menuButton.textRect.h = menuSurface->h;
     menuButton.textRect.x = menuButton.rect.x + (menuButton.rect.w - menuButton.textRect.w) / 2;
     menuButton.textRect.y = menuButton.rect.y + (menuButton.rect.h - menuButton.textRect.h) / 2;
-    SDL_FreeSurface(menuSurface);
+    // SDL_FreeSurface(menuSurface);
     
     menuGOButton.tex = LoadTexture("assets/textures/button.png");
     menuGOButton.rect.w = 200;
@@ -133,22 +133,28 @@ bool game::init(string name, int windowWidth, int windowHeight){
     SDL_Color highScoresTextColor = {0, 0, 0, 255};
     highScoreTextSurface = TTF_RenderText_Solid(font, highScoresText.c_str(), highScoresTextColor);
     highScoreTextTex = SDL_CreateTextureFromSurface(renderer, highScoreTextSurface);
+    const int highScoreTextW = highScoreTextSurface->w;
+    const int highScoreTextH = highScoreTextSurface->h;
+    const int highScoreTextX = (windowWidth - highScoreTextW) / 2;
     SDL_FreeSurface(highScoreTextSurface);
     highScoreTextSurface = nullptr;
-    highScoreTextRect.w = highScoreTextSurface->w;
-    highScoreTextRect.h = highScoreTextSurface->h;
-    highScoreTextRect.x = (windowWidth - highScoreTextSurface->w)/2; 
+    highScoreTextRect.w = highScoreTextW;
+    highScoreTextRect.h = highScoreTextH;
+    highScoreTextRect.x = highScoreTextX; 
     highScoreTextRect.y = 85;
     
     string gameOverTitleText = "GAME OVER";
     SDL_Color gameOverTextColor = {0, 0, 0, 255};
     gameOverTitleTextSurface = TTF_RenderText_Solid(font, gameOverTitleText.c_str(), gameOverTextColor);
     gameOverTitleTextTex = SDL_CreateTextureFromSurface(renderer, gameOverTitleTextSurface);
+    const int gameOverTitleTextW = gameOverTitleTextSurface->w;
+    const int gameOverTitleTextH = gameOverTitleTextSurface->h;
+    const int gameOverTitleTextX = (windowWidth - gameOverTitleTextW) / 2;
     SDL_FreeSurface(gameOverTitleTextSurface);
     gameOverTitleTextSurface = nullptr;
-    gameOverTitleTextRect.w = gameOverTitleTextSurface->w;
-    gameOverTitleTextRect.h = gameOverTitleTextSurface->h;
-    gameOverTitleTextRect.x = (windowWidth - gameOverTitleTextSurface->w)/2; 
+    gameOverTitleTextRect.w = gameOverTitleTextW;
+    gameOverTitleTextRect.h = gameOverTitleTextH;
+    gameOverTitleTextRect.x = gameOverTitleTextX; 
     gameOverTitleTextRect.y = 90;
 
     int gameOverW, gameOverH;
@@ -179,8 +185,16 @@ bool game::init(string name, int windowWidth, int windowHeight){
     
     SDL_Surface* highScoreSurface = TTF_RenderText_Solid(font, "HIGH SCORES", btnTextColor);
     highScoreButton.textTex = SDL_CreateTextureFromSurface(renderer, highScoreSurface);
-    highScoreButton.textRect.w = highScoreSurface->w;
-    highScoreButton.textRect.h = highScoreSurface->h;
+    const int maxHighScoreTextW = highScoreButton.rect.w - 24;
+    const int maxHighScoreTextH = highScoreButton.rect.h - 18;
+    float highScoreScale = 1.0f;
+    if (highScoreSurface->w > maxHighScoreTextW || highScoreSurface->h > maxHighScoreTextH) {
+        float scaleW = static_cast<float>(maxHighScoreTextW) / static_cast<float>(highScoreSurface->w);
+        float scaleH = static_cast<float>(maxHighScoreTextH) / static_cast<float>(highScoreSurface->h);
+        highScoreScale = std::min(scaleW, scaleH);
+    }
+    highScoreButton.textRect.w = static_cast<int>(highScoreSurface->w * highScoreScale);
+    highScoreButton.textRect.h = static_cast<int>(highScoreSurface->h * highScoreScale);
     highScoreButton.textRect.x = highScoreButton.rect.x + (highScoreButton.rect.w - highScoreButton.textRect.w) / 2;
     highScoreButton.textRect.y = highScoreButton.rect.y + (highScoreButton.rect.h - highScoreButton.textRect.h) / 2;
     SDL_FreeSurface(highScoreSurface);
@@ -485,7 +499,7 @@ void game::render(){
 
             // Arkaplan karartmasi
             RQ.add({overlayTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 8});
-            RQ.add({gameOverTable, {gameOverRect.x, gameOverRect.y, gameOverRect.w, gameOverRect.h}, {0, 0, 0, 0}, 10});
+            RQ.add({gameOverTable, gameOverRect, {0, 0, 0, 0}, 10});
             RQ.add({gameOverTex, gameOverTextRect, {0, 0, 0, 0}, 11});
             RQ.add({gameOverTitleTextTex, gameOverTitleTextRect, {0, 0, 0, 0}, 11});
 
@@ -580,21 +594,6 @@ void game::shutdown(){
         TTF_CloseFont(font);
         font = nullptr;
     }
-    if (titleTex) {
-        SDL_DestroyTexture(titleTex);
-        titleTex = nullptr;
-    }
-    TTF_Quit();
-    if(renderer)
-    {
-        SDL_DestroyRenderer(renderer);
-        renderer = nullptr;
-    }
-    if(window) 
-    {
-        SDL_DestroyWindow(window);
-        window = nullptr;
-    }
     if (backgroundTex) {
         SDL_DestroyTexture(backgroundTex);
         backgroundTex = nullptr;
@@ -686,6 +685,22 @@ void game::shutdown(){
     {
         SDL_DestroyTexture(menuButton.textTex);
         menuButton.textTex = nullptr;
+    }
+
+    if (titleTex) {
+        SDL_DestroyTexture(titleTex);
+        titleTex = nullptr;
+    }
+    TTF_Quit();
+    if(renderer)
+    {
+        SDL_DestroyRenderer(renderer);
+        renderer = nullptr;
+    }
+    if(window) 
+    {
+        SDL_DestroyWindow(window);
+        window = nullptr;
     }
     
     SDL_Quit();

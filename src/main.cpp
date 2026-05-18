@@ -14,5 +14,5 @@ int main(int argc, char* argv[]){
 
     myGame.run();
 
-return 0;
+    return 0;
 }
