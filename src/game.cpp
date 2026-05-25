@@ -9,7 +9,7 @@ game::~game(){
 
 // Oyun dosyalarini tanitiyoruz.
 bool game::init(string name, int windowWidth, int windowHeight){
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) return false;
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) return false;
     window = SDL_CreateWindow(name.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_SHOWN);
     if (!window) return false;
     
@@ -24,6 +24,18 @@ bool game::init(string name, int windowWidth, int windowHeight){
     
     IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
     
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) return false;
+
+    bgMusic = Mix_LoadMUS("assets/audio/whack-a-mole-bgMusic.mp3");
+    if(!bgMusic) return false;
+    if(bgMusic) {
+        Mix_PlayMusic(bgMusic, -1);
+        isMusicRunning = true;
+    }
+
+    whackSound = Mix_LoadWAV("assets/audio/bonk.mp3");
+    if (!whackSound) return false;
+
     moleTex = LoadTexture("assets/textures/mole.png");
     if (!moleTex) return false;
     
@@ -69,6 +81,14 @@ bool game::init(string name, int windowWidth, int windowHeight){
     overlayTex = LoadTexture("assets/textures/black.png");
     if(!overlayTex) return false;
     SDL_SetTextureAlphaMod(overlayTex, 150);
+
+    // Muzik butonu
+    musicButton.tex = LoadTexture("assets/textures/music-button.png");
+    if(!musicButton.tex) return false;
+    musicButton.rect.w = 80;
+    musicButton.rect.h = 80;
+    musicButton.rect.x = windowWidth - musicButton.rect.w - 10;
+    musicButton.rect.y = windowHeight - musicButton.rect.h - 10;
 
     // Oyna Butonu
     playButton.tex = LoadTexture("assets/textures/button.png");
@@ -123,8 +143,8 @@ bool game::init(string name, int windowWidth, int windowHeight){
     SDL_FreeSurface(menuGOSurface);
 
     // Retry Butonu
-    retryButton.tex = LoadTexture("assets/textures/retry-button-small.png");
-    retryButton.rect.w = 80;
+    retryButton.tex = LoadTexture("assets/textures/retry-button.png");
+    retryButton.rect.w = 200;
     retryButton.rect.h = 80;
     retryButton.rect.x = (windowWidth - retryButton.rect.w) / 2;
     retryButton.rect.y = (windowHeight/2);
@@ -279,7 +299,6 @@ void game::processInput(){
     // Mouse and keyboard inputs
     while (SDL_PollEvent(&event))
     {
-
         switch (event.type)
         {
         case SDL_QUIT:
@@ -304,7 +323,17 @@ void game::processInput(){
         {
             int mouseX = event.button.x;
             int mouseY = event.button.y;
-            
+            if(currentState == MENU || currentState == PLAYING || currentState == GAME_OVER) {
+                if(musicButton.isClicked(mouseX, mouseY)) {
+                    if (Mix_PausedMusic() == 1) { // Muzik durmussa devam et
+                        Mix_ResumeMusic();
+                        isMusicRunning = true;
+                    } else { // Muzik caliyorsa durdur
+                        Mix_PauseMusic();
+                        isMusicRunning = false;
+                    }
+                }
+            }
             if (currentState == MENU)
             {
                 // Oyna butonuna tiklandiysa:
@@ -336,7 +365,7 @@ void game::processInput(){
                 if (retryButton.isClicked(mouseX, mouseY) || menuGOButton.isClicked(mouseX, mouseY))
                 {
                     score = 0;
-                    timer = 15.0f;
+                    timer = 60.0f;
                     isDone = false;
                     for (int i = 0; i < 9; ++i) {
                         isVisible[i] = false;
@@ -359,6 +388,7 @@ void game::processInput(){
                                 isHit[i] = true;
                                 moleTimers[i] = 0.0f;
                                 score += 10;
+                                Mix_PlayChannel(-1, whackSound, 0);
                             }
                         }
                     }
@@ -434,12 +464,22 @@ void game::render(){
         RQ.add({exitButton.textTex, exitButton.textRect, {0, 0, 0, 0}, 6});
         RQ.add({highScoreButton.tex, highScoreButton.rect, {0, 0, 0, 0}, 5});
         RQ.add({highScoreButton.textTex, highScoreButton.textRect, {0, 0, 0, 0}, 6});
-
+        musicButton.rect.w = 80;
+        musicButton.rect.h = 80;
+        musicButton.rect.x = windowWidth - musicButton.rect.w - 10;
+        musicButton.rect.y = windowHeight - musicButton.rect.h - 10;
+        RQ.add({musicButton.tex, musicButton.rect, {0, 0, 0, 0}, 5});
     } else if (currentState == PLAYING || currentState == GAME_OVER) { /* Oyundaysa oyun ekranini cizdir */
         RQ.add({backgroundTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 0});
         if (currentState == PLAYING)
         {
             RQ.add({barTex, {-40, 0, barRect.w, barRect.h}, {0, 0, 0, 0}, 1});
+            
+            musicButton.rect.w = 55;
+            musicButton.rect.h = 55;
+            musicButton.rect.x = 20;
+            musicButton.rect.y = 13;
+            RQ.add({musicButton.tex, musicButton.rect, {0, 0, 0, 0}, 4});
         }
 
         for (int i = 0; i < 9; ++i) {
@@ -509,6 +549,11 @@ void game::render(){
             // Menu Butonu
             RQ.add({menuGOButton.tex, menuGOButton.rect, {0, 0, 0, 0}, 12});
             RQ.add({menuGOButton.textTex, menuGOButton.textRect, {0, 0, 0, 0}, 13});
+            musicButton.rect.w = 80;
+            musicButton.rect.h = 80;
+            musicButton.rect.x = windowWidth - musicButton.rect.w - 10;
+            musicButton.rect.y = windowHeight - musicButton.rect.h - 10;
+            RQ.add({musicButton.tex, musicButton.rect, {0, 0, 0, 0}, 14});
         }
         
     } else if (currentState == HIGH_SCORE) { /*High Scoredaysa skorlari cizdir */
@@ -691,7 +736,7 @@ void game::shutdown(){
         SDL_DestroyTexture(titleTex);
         titleTex = nullptr;
     }
-    TTF_Quit();
+
     if(renderer)
     {
         SDL_DestroyRenderer(renderer);
@@ -702,7 +747,21 @@ void game::shutdown(){
         SDL_DestroyWindow(window);
         window = nullptr;
     }
+    if(bgMusic) {
+        Mix_FreeMusic(bgMusic);
+        bgMusic = nullptr;
+    }
+    if(musicButton.tex) {
+        SDL_DestroyTexture(musicButton.tex);
+        musicButton.tex = nullptr;
+    }
+    if (whackSound) {
+        Mix_FreeChunk(whackSound);
+        whackSound = nullptr;
+    }
     
+    Mix_Quit();
+    TTF_Quit();
     SDL_Quit();
 }
 
