@@ -30,7 +30,6 @@ bool game::init(string name, int windowWidth, int windowHeight){
     if(!bgMusic) return false;
     if(bgMusic) {
         Mix_PlayMusic(bgMusic, -1);
-        isMusicRunning = true;
     }
 
     whackSound = Mix_LoadWAV("assets/audio/bonk.mp3");
@@ -126,7 +125,7 @@ bool game::init(string name, int windowWidth, int windowHeight){
     menuButton.textRect.h = menuSurface->h;
     menuButton.textRect.x = menuButton.rect.x + (menuButton.rect.w - menuButton.textRect.w) / 2;
     menuButton.textRect.y = menuButton.rect.y + (menuButton.rect.h - menuButton.textRect.h) / 2;
-    // SDL_FreeSurface(menuSurface);
+    SDL_FreeSurface(menuSurface);
     
     menuGOButton.tex = LoadTexture("assets/textures/button.png");
     menuGOButton.rect.w = 200;
@@ -141,6 +140,13 @@ bool game::init(string name, int windowWidth, int windowHeight){
     menuGOButton.textRect.x = menuGOButton.rect.x + (menuGOButton.rect.w - menuGOButton.textRect.w) / 2;
     menuGOButton.textRect.y = menuGOButton.rect.y + (menuGOButton.rect.h - menuGOButton.textRect.h) / 2;
     SDL_FreeSurface(menuGOSurface);
+
+    // Oyun icindeyken Ana Menu Butonu
+    menuPlayingButton.tex = LoadTexture("assets/textures/menu-button.png");
+    menuPlayingButton.rect.w = 55;
+    menuPlayingButton.rect.h = 55;
+    menuPlayingButton.rect.x = 0;
+    menuPlayingButton.rect.y = 0;
 
     // Retry Butonu
     retryButton.tex = LoadTexture("assets/textures/retry-button.png");
@@ -327,10 +333,8 @@ void game::processInput(){
                 if(musicButton.isClicked(mouseX, mouseY)) {
                     if (Mix_PausedMusic() == 1) { // Muzik durmussa devam et
                         Mix_ResumeMusic();
-                        isMusicRunning = true;
                     } else { // Muzik caliyorsa durdur
                         Mix_PauseMusic();
-                        isMusicRunning = false;
                     }
                 }
             }
@@ -341,7 +345,7 @@ void game::processInput(){
                 {
                     currentState = PLAYING;
                     score = 0;
-                    timer = 15.0f;
+                    timer = 60.0f;
                     isDone = false;
                 }
                 // Cikis butonuna tiklandiysa:
@@ -376,6 +380,19 @@ void game::processInput(){
                     if (menuGOButton.isClicked(mouseX, mouseY)) currentState = MENU;
                 }
             } else if (currentState == PLAYING) {
+                // Oyun icindeyken Menu butonuna tiklandiysa ana menuye don
+                if (menuPlayingButton.isClicked(mouseX, mouseY)) {
+                    score = 0;
+                    timer = 60.0f;
+                    isDone = false;
+                    for (int i = 0; i < 9; ++i) {
+                        isVisible[i] = false;
+                        isHit[i] = false;
+                        moleTimers[i] = 0.0f;
+                    }
+                    currentState = MENU;
+                    break;
+                }
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {
                     SDL_Point mousePoint = { mouseX, mouseY };
@@ -473,13 +490,26 @@ void game::render(){
         RQ.add({backgroundTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 0});
         if (currentState == PLAYING)
         {
-            RQ.add({barTex, {-40, 0, barRect.w, barRect.h}, {0, 0, 0, 0}, 1});
+            RQ.add({barTex, {0, 0, windowWidth, barRect.h}, {0, 0, 0, 0}, 1});
             
-            musicButton.rect.w = 55;
-            musicButton.rect.h = 55;
-            musicButton.rect.x = 20;
-            musicButton.rect.y = 13;
+            const int barPaddingX = 24;
+            const int barPaddingY = 6;
+            const int barButtonSpacing = 10;
+            const int maxButtonSize = barRect.h - (barPaddingY * 2);
+            const int buttonSize = (maxButtonSize < 48) ? maxButtonSize : 48;
+
+            musicButton.rect.w = buttonSize;
+            musicButton.rect.h = buttonSize;
+            musicButton.rect.x = barPaddingX;
+            musicButton.rect.y = barPaddingY + (barRect.h - (barPaddingY * 2) - buttonSize) / 2;
             RQ.add({musicButton.tex, musicButton.rect, {0, 0, 0, 0}, 4});
+
+            // Muzik butonunun yanina Ana Menu butonunu yerlestir
+            menuPlayingButton.rect.w = musicButton.rect.w;
+            menuPlayingButton.rect.h = musicButton.rect.h;
+            menuPlayingButton.rect.x = musicButton.rect.x + musicButton.rect.w + barButtonSpacing;
+            menuPlayingButton.rect.y = musicButton.rect.y;
+            RQ.add({menuPlayingButton.tex, menuPlayingButton.rect, {0, 0, 0, 0}, 4});
         }
 
         for (int i = 0; i < 9; ++i) {
@@ -540,7 +570,6 @@ void game::render(){
             // Arkaplan karartmasi
             RQ.add({overlayTex, {0, 0, windowWidth, windowHeight}, {0, 0, 0, 0}, 8});
             RQ.add({gameOverTable, gameOverRect, {0, 0, 0, 0}, 10});
-            RQ.add({gameOverTex, gameOverTextRect, {0, 0, 0, 0}, 11});
             RQ.add({gameOverTitleTextTex, gameOverTitleTextRect, {0, 0, 0, 0}, 11});
 
             // Retry Butonu
@@ -625,10 +654,6 @@ void game::render(){
     if (timerTexture) {
         SDL_DestroyTexture(timerTexture);
         timerTexture = nullptr;
-    }
-    if (gameOverTex) {
-        SDL_DestroyTexture(gameOverTex);
-        gameOverTex = nullptr;
     }
     
     SDL_RenderPresent(renderer);
@@ -731,7 +756,11 @@ void game::shutdown(){
         SDL_DestroyTexture(menuButton.textTex);
         menuButton.textTex = nullptr;
     }
-
+    if (menuPlayingButton.tex)
+    {
+        SDL_DestroyTexture(menuPlayingButton.tex);
+        menuPlayingButton.tex = nullptr;
+    }
     if (titleTex) {
         SDL_DestroyTexture(titleTex);
         titleTex = nullptr;

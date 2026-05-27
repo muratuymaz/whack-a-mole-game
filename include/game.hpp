@@ -47,12 +47,9 @@ private:
     SDL_Texture* timerTexture = nullptr;
     SDL_Surface* textSurface = nullptr;
     SDL_Texture* textTexture = nullptr;
-    SDL_Texture* gameOverTex = nullptr;
-    SDL_Surface* gameOverSurface = nullptr;
     SDL_Rect timerRect;
     SDL_Rect textRect;
     SDL_Rect barRect;
-    SDL_Rect gameOverTextRect;
 
     renderQueue RQ;
 
@@ -96,9 +93,9 @@ private:
     Button highScoreButton;
     Button menuButton;
     Button menuGOButton;
+    Button menuPlayingButton;
     Button retryButton;
     Button musicButton;
-    bool isMusicRunning;
     Mix_Music* bgMusic = nullptr;
     Mix_Chunk* whackSound = nullptr;
 
@@ -110,7 +107,6 @@ private:
     SDL_Texture* titleTex = nullptr;
     SDL_Rect titleRect;
 
-    const string highScorePath = "assets/data/highscore.txt";
     vector<int> highScores;
     SDL_Surface* scores = nullptr;
     SDL_Texture* scoresTex = nullptr;
