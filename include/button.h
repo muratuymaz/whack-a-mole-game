@@ -1,6 +1,5 @@
 #pragma once
 #include <SDL2/SDL.H>
-using namespace std;
 
 struct Button {
     SDL_Texture* tex = nullptr;
