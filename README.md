@@ -1,9 +1,11 @@
 # Whack-a-Mole – Zamana Karşı Refleks Oyunu
 
-![Language](https://img.shields.io/badge/language-C%2B%2B17-blue.svg) ![Library](https://img.shields.io/badge/library-SDL2-green.svg) ![Status](https://img.shields.io/badge/status-active-success.svg)
-
 ## 1. Proje Hakkında
 **Whack-a-Mole**, C++ programlama dili ve SDL2 kütüphanesi kullanılarak geliştirilmiş, reflekslere ve hız dayalı tek oyunculu bir arcade oyunudur. Oyuncu, 3x3'lük bir ızgarada (toplam 9 delik) rastgele beliren köstebeklere 60 saniyelik kısıtlı süre içerisinde fare ile tıklayarak en yüksek skoru elde etmeye çalışır.
+
+**Murat Uymaz**
+
+**Öğrenci No:** 240229026
 
 ---
 
@@ -55,6 +57,23 @@ Oyun tamamen fare reflekslerine dayalı olarak tasarlanmıştır:
 * CMake (3.10 veya üzeri)
 * SDL2, SDL2_image, SDL2_ttf ve SDL2_mixer kütüphanelerinin sisteme tanımlı olması
 
+#### Windows üzerinde MinGW, CMake ve gerekli SDL2 kütüphanelerini kurmak için MSYS2'yi bilgisayarınıza kurun. Ardından MSYS2 terminalini (UCRT64 veya MINGW64) açarak aşağıdaki komutu çalıştırın:
+```bash
+# Derleyici (GCC), CMake ve tüm SDL2 kütüphanelerinin kurulumu
+pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-SDL2 mingw-w64-ucrt-x86_64-SDL2_image mingw-w64-ucrt-x86_64-SDL2_ttf mingw-w64-ucrt-x86_64-SDL2_mixer
+```
+#### Linux dağıtımlarında gerekli paketleri resmi depolardan tek satırda kurabilirsiniz. Terminali açın ve aşağıdaki komutu çalıştırın:
+```bash
+# Paket listesini güncelleme ve gerekli derleme araçları ile kütüphanelerin kurulumu
+sudo apt update
+sudo apt install -y build-essential cmake libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
+```
+#### Eğer macOS kullanıyorsanız ve sisteminizde Homebrew yüklüyse, terminal üzerinden şu komutla ön gereksinimleri kurabilirsiniz:
+```bash
+# CMake ve SDL2 kütüphanelerinin kurulumu
+brew install cmake sdl2 sdl2_image sdl2_ttf sdl2_mixer
+```
+
 ### Kurulum Adımları
 
 **1. Depoyu İndirin**
@@ -85,7 +104,39 @@ cd ..
 ---
 
 ## 6. Proje Yapısı
-* src/ (Kaynak Kodlar): main.cpp, game.cpp ve ilgili başlık (.hpp/.h) dosyaları.
-* assets/: Oyun içi varlıklar (Dokular/Textures, Sesler/Audio, Fontlar, Skor TXT dosyası).
-* dlls/: Windows ortamında çalışma zamanı için gerekli SDL2 kütüphane dosyaları.
-* CMakeLists.txt: Projenin derleme ve bağlama yapılandırmalarını içeren CMake dosyası.
+
+```text
+Whack-a-Mole/
+├── assets/
+├── screenshots/
+├── include/
+│   ├── game.hpp
+│   ├── button.h
+│   └── renderQueue.h
+├── src/
+│   ├── game.cpp
+│   └── main.cpp
+├── CMakeLists.txt
+└── README.md
+```
+## 7. Oyun Görselleri
+
+### Ana Menü
+---
+![Ana Menü](screenshots/main-menu.png)
+
+### Oyun İçi
+---
+![Oyun Ekranı](screenshots/playing-menu.png)
+
+### Oyun Sonu
+---
+![Oyun Sonu Ekranı](screenshots/game-over-menu.png)
+
+### Yüksek Skorlar
+---
+![Yüksek Skorlar Ekranı](screenshots/high-scores.png)
+
+## 8.Oynanış Videosu
+
+https://github.com/user-attachments/assets/fc9f7583-e1f4-4d83-83c8-b899bfad4e3a
