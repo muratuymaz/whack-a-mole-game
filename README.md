@@ -60,6 +60,7 @@ Oyun tamamen fare reflekslerine dayalı olarak tasarlanmıştır:
 **1. Depoyu İndirin**
 
 Proje dosyalarını bilgisayarınıza indirin veya git ile klonlayın.
+* **Not:** Oyunun düzgün çalışabilmesi için proje dosyalarını bilgisayarınızda özel harf içermeyen bir disk veya klasör içerisine kurun.
 
 **2. Derleme (Terminal üzerinden)**
 
@@ -67,7 +68,7 @@ Proje dizinine gidin ve aşağıdaki komutları çalıştırın:
 ```bash
 mkdir build
 cd build
-cmake ..
+cmake .. -G "MinGW Makefiles"
 cmake --build .
 ```
 
@@ -76,7 +77,7 @@ cmake --build .
 Oluşturulan çalıştırılabilir dosyayı başlatın:
 ```bash
 cd ..
-main
+./main
 ```
 
 * **Not:** Oyunun düzgün çalışabilmesi için assets/ klasörünün ve gerekli tüm DLL dosyalarının (dlls/ içerisindekiler) çalıştırılabilir .exe dosyası ile aynı dizinde bulunduğundan emin olun.
