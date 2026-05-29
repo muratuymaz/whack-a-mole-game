@@ -16,14 +16,12 @@
 
 struct TTF_Font;
 
-using namespace std;
-
 
 class game{
 public:
     game();
     ~game();
-    bool init(string name, int windowWidth, int windowHeight);
+    bool init(std::string name, int windowWidth, int windowHeight);
     void shutdown();
     void run();
     
@@ -31,13 +29,18 @@ private:
     void processInput();
     void update(float deltaTime);
     void render();
+    void renderMenu();
+    void renderPlaying();
+    void renderGameOver();
+    void renderHighScore(std::vector<SDL_Texture*>& tempScoreTextures);
+    void resetRoundState();
     void loadHighScores();
     void checkNewHighScore(int score);
     
 private:
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
-    SDL_Texture* LoadTexture(const string& path);
+    SDL_Texture* LoadTexture(const std::string& path);
 
     SDL_Texture* moleTex= nullptr;
     SDL_Texture* moleHitTex= nullptr;
@@ -70,7 +73,7 @@ private:
     SDL_Texture* scoreGOTextTex = nullptr;
     TTF_Font* font = nullptr;
 
-    float timer = 60.0;
+    float timer = 60.0f;
     bool isDone = false;
 
     enum GameState { MENU, PLAYING, GAME_OVER, HIGH_SCORE};
@@ -107,7 +110,7 @@ private:
     SDL_Texture* titleTex = nullptr;
     SDL_Rect titleRect;
 
-    vector<int> highScores;
+    std::vector<int> highScores;
     SDL_Surface* scores = nullptr;
     SDL_Texture* scoresTex = nullptr;
 };
