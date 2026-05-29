@@ -4,3 +4,4 @@ tempCodeRunnerFile.cpp
 Gereksinimler.txt
 whack-a-mole-game.code-workspace
 \build
+*.dll
