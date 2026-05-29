@@ -7,7 +7,7 @@ int main(int argc, char* argv[]){
 
     game myGame;
 
-    while (!myGame.init("Pencere",800,600))
+    while (!myGame.init("Whack A Mole",800,600))
     {
         return -1;
     }
